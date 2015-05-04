@@ -121,6 +121,7 @@ public:
     }
 
     //omega = 1.0/tau
+    //LBM-SRT, exhibits a theoretical upper bound (omega < 2)
     void relax(Node& n, float visc = 0.333)
     {
         Node equilibrium;
@@ -131,15 +132,11 @@ public:
 
         float usq = n.u.lengthSquared();
 
-        //recuring fraction
-        float un1 = 1.0 - (1.5 * usq);
-
         for (int i = 0; i < 9; i++)
         {
             float c_dot_u = c[i].dot(n.u);
 
-            equilibrium.distributions[i] = w[i] * n.density *
-                    (un1 + c_dot_u * (3.0 + c_dot_u*4.5));
+            equilibrium.distributions[i] = w[i] * n.density * ( 1. + c_dot_u * (3. + 4.5 * c_dot_u ) - 1.5 * usq);
 
             n.distributions[i] +=
                     omega*(equilibrium.distributions[i] - n.distributions[i]);

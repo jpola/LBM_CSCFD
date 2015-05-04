@@ -2,9 +2,9 @@
 
 void ofApp::setup()
 {
-    lbm_controler = Controler(256,64);
+    lbm_controler = Controler(512,32);
     lbm_controler.setup_channel();
-    lbm_controler.setup_obstacle();
+    //lbm_controler.setup_obstacle();
     colormap.setMapFromName("jet");
 }
 
