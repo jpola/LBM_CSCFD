@@ -2,20 +2,36 @@
 
 void ofApp::setup()
 {
-    lbm_controler = Controler(512,32);
+
+    //visc.addListener(this, &ofApp::viscosityChanged);
+    gui.setup("LBM control panel");
+    gui.add(visc.set("viscosity", 0.333));
+
+
+    viscosity = 0.1;
+    acceleration.x = 0.0002;
+    acceleration.y = 0;
+
+
+    lbm_controler = Controler(128,64, viscosity, acceleration);
+
     lbm_controler.setup_channel();
-    //lbm_controler.setup_obstacle();
+    lbm_controler.setup_obstacle();
     colormap.setMapFromName("jet");
 }
 
 void ofApp::update()
 {
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 30; i++)
     {
         lbm_controler.propagate();
-        lbm_controler.impose_gradient();
     }
 }
+
+//void ofApp::viscosityChanged(float visc)
+//{
+//    this->visc.set(visc);
+//}
 
 void ofApp::draw()
 {
@@ -25,6 +41,7 @@ void ofApp::draw()
     float scale = scaley/scalex;
 
     static float max = -1000;
+    static float mag_scale = 1.0;
     for (int j = 0; j < lbm_controler.y_size; j++)
     {
         for(int i = 0; i < lbm_controler.x_size; i++)
@@ -39,19 +56,23 @@ void ofApp::draw()
             if (mag > max)
             {
                 max = mag;
-                std::cout << "mag: " << mag ;
-                std::cout << " scaled mag = " << (12* mag * float(NCOLORS)) << std::endl;
+                //std::cout << "mag: " << mag ;
+                mag_scale = float(NCOLORS) / max;
+                //std::cout << " scaled mag = " << mag_scale << std::endl;
             }
+
 
             ofVec2f p1 (i* scalex, j*scaley);
             ofVec2f p2 (p1);
             p2.x -= scalex * v.x / mag;
             p2.y -= scaley * v.y / mag;
 
-            ofSetColor(colormap.use(12 * mag * float(NCOLORS)));
+            ofSetColor(colormap.use(mag*mag_scale));
             ofDrawArrow(p1,p2, 2);
         }
     }
+
+    gui.draw();
 
 }
 

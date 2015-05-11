@@ -4,6 +4,7 @@
 
 
 #include <ofMain.h>
+#include <ofxGui.h>
 
 #include "lbmController.hpp"
 #include "colormap/ofxColorMap.h"
@@ -27,7 +28,19 @@ class ofApp : public ofBaseApp
     void dragEvent     (ofDragInfo);
 
     Controler lbm_controler;
+
     ofxColorMap colormap;
+
+    //input parameters
+    float viscosity;
+
+    ofVec2f acceleration;
+
+    //GUI
+    ofxPanel gui;
+    ofParameter<float> visc;
+
+    //void viscosityChanged(float visc);
 };
 
 

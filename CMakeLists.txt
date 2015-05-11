@@ -9,6 +9,7 @@ set(APP LBM_CPU)
 list(APPEND CMAKE_MODULE_PATH /home/jpola/Projects/OpenFrameworks/of)
 
 include(openFrameworks)
+ofxaddon(ofxGui)
 
 #find OpenMP for parallel operations
 find_package( OpenMP REQUIRED )
