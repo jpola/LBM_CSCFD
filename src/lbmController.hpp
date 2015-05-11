@@ -4,7 +4,12 @@
 
 #include <ofVec2f.h>
 #include <ofVectorMath.h>
+#include "colormap/ofxColorMap.h"
+
 #include "node.hpp"
+
+enum LBM_MODEL {BGK, MRT};
+
 
 class Controler
 {
@@ -13,7 +18,7 @@ public:
         x_size(0), y_size(0), size(0),
         w(9), c(9), nodes(0),
         viscosity(0), acceleration(0),
-        S(9), m_eq(9), m(9)
+        S(9), m_eq(9), m(9), model(BGK)
     {
         init_base_vectors();
         init_weights();
@@ -21,11 +26,13 @@ public:
         init_modes(viscosity, viscosity);
     }
 
-    Controler(int x, int y, float viscosity, ofVec2f acceleration) :
+    Controler(int x, int y,
+              float viscosity, ofVec2f acceleration,
+              LBM_MODEL model) :
         x_size(x), y_size(y), size(x*y),
         w(9), c(9), nodes(size),
         viscosity(viscosity), acceleration(acceleration),
-        S(9), m_eq(9), m(9)
+        S(9), m_eq(9), m(9), model(model)
     {
         init_base_vectors();
         init_weights();
@@ -76,6 +83,28 @@ public:
         }
     }
 
+    void setup_cavity()
+    {
+        for (int i = 0; i < x_size; i++)
+        {
+            int bottom = i + x_size * (y_size - 1);
+            nodes[bottom].node_type = Node::SOLID;
+            nodes[bottom].u.set(0.0);
+        }
+
+        for (int i = 0; i < y_size; i++)
+        {
+            //int index = x + x_size * y;
+            int left  = x_size * i;
+            int right = (x_size - 1) + (x_size * i);
+            nodes[left].node_type = Node::SOLID;
+            nodes[left].u.set(0.0);
+            nodes[right].node_type = Node::SOLID;
+            nodes[right].u.set(0.0);
+        }
+
+    }
+
     void setup_channel()
     {
         for (int i = 0; i < x_size; i++)
@@ -105,7 +134,6 @@ public:
         }
     }
 
-
     void propagate()
     {
 
@@ -121,8 +149,10 @@ public:
                 }
                 else
                 {
-                    //relax(nodes[index]);
-                    relaxMrt(nodes[index]);
+                    if (model == BGK)
+                        relax(nodes[index], y);
+                    else
+                        relaxMrt(nodes[index], y);
                 }
 
                 int xw = (x == x_size-1    ) ? 0		: x + 1;
@@ -144,9 +174,124 @@ public:
         }
     }
 
+    void setViscosity(float viscosity)
+    {
+        this->viscosity = viscosity;
+        init_modes(viscosity, viscosity);
+    }
+
+    void setAcceleration(ofVec2f acceleration)
+    {
+        this->acceleration = acceleration;
+    }
+
+    void setModel(LBM_MODEL model)
+    {
+        this->model = model;
+    }
+
+    void draw (int windwWidth, int windowHeight, ofxColorMap& cmap)
+    {
+        float scalex = (float)windwWidth/x_size;
+        float scaley = (float)windowHeight/y_size;
+
+        float scale = scaley/scalex;
+
+        static float max = -1000;
+        static float mag_scale = 1.0;
+        for (int j = 0; j < y_size; j++)
+        {
+            for(int i = 0; i < x_size; i++)
+            {
+                int pos = j * x_size + i;
+
+               // lbm_controler.nodes[pos].compute_velocity(lbm_controler.c);
+                const ofVec2f& v = nodes[pos].u;
+
+                float mag = v.length();
+
+                if (mag > max)
+                {
+                    max = mag;
+                    //std::cout << "mag: " << mag ;
+                    mag_scale = float(NCOLORS) / max;
+                    //std::cout << " scaled mag = " << mag_scale << std::endl;
+                }
+
+
+                ofVec2f p1 (i* scalex, j*scaley);
+                ofVec2f p2 (p1);
+                p2.x -= scalex * v.x / mag;
+                p2.y -= scaley * v.y / mag;
+
+                ofSetColor(cmap.use(mag*mag_scale));
+                ofDrawArrow(p1,p2, 2);
+            }
+        }
+
+    }
+
+    int x_size;
+    int y_size;
+
+    int size;
+
+    //d2q9 weights
+    std::vector<float> w;
+    //lattice vectors
+    std::vector<ofVec2f> c;
+
+    std::vector<Node> nodes;
+
+    float viscosity;
+
+    ofVec2f acceleration;
+
+    LBM_MODEL model;
+
+
+private:
+
+    float M[9][9] = {
+                        { 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                        {-4,-1,-1,-1,-1, 2, 2, 2, 2},
+                        { 4,-2,-2,-2,-2, 1, 1, 1, 1},
+                        { 0, 1, 0,-1, 0, 1,-1,-1, 1},
+                        { 0,-2, 0, 2, 0, 1,-1,-1, 1},
+                        { 0, 0, 1, 0,-1, 1, 1,-1,-1},
+                        { 0, 0,-2, 0, 2, 1, 1,-1,-1},
+                        { 0, 1,-1, 1,-1, 0, 0, 0, 0},
+                        { 0, 0, 0, 0, 0, 1,-1, 1,-1}
+                    };
+
+
+    float M_INV [9][9]= {
+                {0.1111111111111111,-0.11111111111111112,  0.1111111111111111,0,0,0,0,0,0},
+                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,0.16666666666666666,-0.16666666666666669,0,0,0.25,0},
+                {0.1111111111111111,-0.027777777777777762,-0.055555555555555539,0,-1.3877787807814457e-017,0.16666666666666666,-0.16666666666666669,-0.25,0},
+                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,-0.16666666666666666,0.16666666666666669,0,0,0.25,0},
+                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,0,1.3877787807814457e-017,-0.16666666666666666,0.16666666666666669,-0.25,0},
+                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,0.16666666666666666,0.083333333333333329,0.16666666666666666,0.083333333333333329,0,0.25},
+                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,0.16666666666666666,0.083333333333333329,0,-0.25},
+                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,0.25},
+                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,0.16666666666666666,0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,-0.25}
+                };
+
+    //MRT relaxation parameters
+    // s0, s3, s5 = 0 - rho, jx, jy muszą być zachowane.
+    // s4 = s6  -- related to the boundary conditions, calculated from no-slip delta = 4/3 * ( 1/s8 - 1/2)*(1/s4 - 1/2); s8 jest zadane, no-slip = delta = 1/2;
+    // s1 = 2 / (6 * eta + 1)  --- eta - bulk volume viscosity, responsible for damping density and pressure fluctuations
+    // s7 = s8 = 2 / (6 * nu + 1) -- nu - kinematic viscosity;
+    // s2, s4, s6, reszta w granicach (0, 2)
+    std::vector<float> S;
+    std::vector<float> m_eq; // equilibrium moments;
+    std::vector<float> m;  // node's moment value;
+
+
+
     //omega = 1.0/tau
     //LBM-SRT, exhibits a theoretical upper bound (omega < 2)
-    void relax(Node& n)
+    void relax(Node& n, int y)
     {
         Node equilibrium;
 
@@ -154,7 +299,8 @@ public:
         float omega = 1.f/tau;
 
         n.compute_velocity(c);
-        n.u += acceleration * tau;
+        if (y == 0)
+            n.u += acceleration * tau;
 
         float usq = n.u.lengthSquared();
 
@@ -169,11 +315,14 @@ public:
         }
     }
 
-    void relaxMrt(Node& n)
+    void relaxMrt(Node& n, int y)
     {
         n.compute_velocity(c);
-        float tau = 3.f * viscosity + 0.5f;
-        n.u += acceleration * tau;
+        if (y == 0)
+        {
+            float tau = 3.f * viscosity + 0.5f;
+            n.u += acceleration * tau;
+        }
 
         //calculate current value of the moments from PDF
         //mi = mi + M i,j ∗ fj
@@ -241,27 +390,6 @@ public:
     }
 
 
-
-    int x_size;
-    int y_size;
-
-    int size;
-
-    //d2q9 weights
-    std::vector<float> w;
-    //lattice vectors
-    std::vector<ofVec2f> c;
-
-    std::vector<Node> nodes;
-
-    float viscosity;
-
-    ofVec2f acceleration;
-
-
-
-private:
-
     void init_base_vectors()
     {
         assert(c.size() == 9);
@@ -286,41 +414,6 @@ private:
         w[5] = w[6] = w[7] = w[8] = 1./36.;
 
     }
-
-    float M[9][9] = {
-                        { 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                        {-4,-1,-1,-1,-1, 2, 2, 2, 2},
-                        { 4,-2,-2,-2,-2, 1, 1, 1, 1},
-                        { 0, 1, 0,-1, 0, 1,-1,-1, 1},
-                        { 0,-2, 0, 2, 0, 1,-1,-1, 1},
-                        { 0, 0, 1, 0,-1, 1, 1,-1,-1},
-                        { 0, 0,-2, 0, 2, 1, 1,-1,-1},
-                        { 0, 1,-1, 1,-1, 0, 0, 0, 0},
-                        { 0, 0, 0, 0, 0, 1,-1, 1,-1}
-                    };
-
-
-    float M_INV [9][9]= {
-                {0.1111111111111111,-0.11111111111111112,  0.1111111111111111,0,0,0,0,0,0},
-                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,0.16666666666666666,-0.16666666666666669,0,0,0.25,0},
-                {0.1111111111111111,-0.027777777777777762,-0.055555555555555539,0,-1.3877787807814457e-017,0.16666666666666666,-0.16666666666666669,-0.25,0},
-                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,-0.16666666666666666,0.16666666666666669,0,0,0.25,0},
-                {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,0,1.3877787807814457e-017,-0.16666666666666666,0.16666666666666669,-0.25,0},
-                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,0.16666666666666666,0.083333333333333329,0.16666666666666666,0.083333333333333329,0,0.25},
-                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,0.16666666666666666,0.083333333333333329,0,-0.25},
-                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,0.25},
-                {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,0.16666666666666666,0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,-0.25}
-                };
-
-    //MRT relaxation parameters
-    // s0, s3, s5 = 0 - rho, jx, jy muszą być zachowane.
-    // s4 = s6  -- related to the boundary conditions, calculated from no-slip delta = 4/3 * ( 1/s8 - 1/2)*(1/s4 - 1/2); s8 jest zadane, no-slip = delta = 1/2;
-    // s1 = 2 / (6 * eta + 1)  --- eta - bulk volume viscosity, responsible for damping density and pressure fluctuations
-    // s7 = s8 = 2 / (6 * nu + 1) -- nu - kinematic viscosity;
-    // s2, s4, s6, reszta w granicach (0, 2)
-    std::vector<float> S;
-    std::vector<float> m_eq; // equilibrium moments;
-    std::vector<float> m;  // node's moment value;
 };
 
 

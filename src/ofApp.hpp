@@ -2,12 +2,12 @@
 #ifndef _OFAPP_HPP_
 #define _OFAPP_HPP_
 
-
 #include <ofMain.h>
 #include <ofxGui.h>
 
 #include "lbmController.hpp"
 #include "colormap/ofxColorMap.h"
+#include "particle.hpp"
 
 class ofApp : public ofBaseApp
 {
@@ -31,16 +31,20 @@ class ofApp : public ofBaseApp
 
     ofxColorMap colormap;
 
-    //input parameters
-    float viscosity;
-
-    ofVec2f acceleration;
-
     //GUI
     ofxPanel gui;
-    ofParameter<float> visc;
+    ofParameter<float> viscosity;
+    ofParameter<ofVec2f> acceleration;
 
-    //void viscosityChanged(float visc);
+    ofxToggle model;
+
+    std::vector<Particle> particles;
+
+
+    void viscosityChanged(float& v);
+    void accelerationChanged(ofVec2f &a);
+    void modelChanged(bool &b);
+
 };
 
 

@@ -27,6 +27,8 @@ set(INCLUDES
     src/node.hpp
     src/lbmTypes.hpp
     src/lbmController.hpp
+    src/particle.hpp
+    src/interpolation.hpp
 )
 
 set(SOURCES
@@ -34,6 +36,7 @@ set(SOURCES
     src/colormap/ofxColorMap.cpp
     src/colormap/namedMaps.cpp
     src/ofApp.cpp
+    src/particle.cpp
 )
 
 add_executable(

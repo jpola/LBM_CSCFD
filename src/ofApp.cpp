@@ -3,21 +3,30 @@
 void ofApp::setup()
 {
 
-    //visc.addListener(this, &ofApp::viscosityChanged);
+    viscosity.addListener(this, &ofApp::viscosityChanged);
+    acceleration.addListener(this, &ofApp::accelerationChanged);
+    model.addListener(this, &ofApp::modelChanged);
+
     gui.setup("LBM control panel");
-    gui.add(visc.set("viscosity", 0.333));
+    gui.add(viscosity.set("viscosity", 0.004, 0.00001, 0.008));
+    gui.add(acceleration.set("acceleration", ofVec2f(0.0005, 0),
+                             ofVec2f(0,0), ofVec2f(0.002,0.002)));
+    gui.add(model.setup("MRT", true));
 
+    lbm_controler = Controler(64, 64,
+                              viscosity.get(), acceleration, MRT);
 
-    viscosity = 0.1;
-    acceleration.x = 0.0002;
-    acceleration.y = 0;
-
-
-    lbm_controler = Controler(128,64, viscosity, acceleration);
-
-    lbm_controler.setup_channel();
-    lbm_controler.setup_obstacle();
+    //lbm_controler.setup_channel();
+    lbm_controler.setup_cavity();
+    //lbm_controler.setup_obstacle();
     colormap.setMapFromName("jet");
+
+    for (int i = 0; i < 30; i++){
+        Particle p;
+        p.position.set(ofRandom(10,ofGetWindowWidth()-10),ofRandom(10, ofGetWindowHeight()-10));
+        p.velocity.set(0);
+        particles.push_back(p);
+    }
 }
 
 void ofApp::update()
@@ -26,54 +35,50 @@ void ofApp::update()
     {
         lbm_controler.propagate();
     }
+
+    for(auto& p : particles)
+    {
+        p.update(lbm_controler);
+    }
+
 }
 
-//void ofApp::viscosityChanged(float visc)
-//{
-//    this->visc.set(visc);
-//}
+void ofApp::viscosityChanged(float &v)
+{
+    this->viscosity.set(v);
+    lbm_controler.setViscosity(this->viscosity.get());
+}
+
+void ofApp::accelerationChanged(ofVec2f& a)
+{
+    this->acceleration.set(a);
+    lbm_controler.setAcceleration(this->acceleration.get());
+}
+
+void ofApp::modelChanged(bool& b)
+{
+   model = b;
+   if (model)
+   {
+       model.setName("MRT");
+       lbm_controler.setModel(MRT);
+   }
+   else
+   {
+       model.setName("BGK");
+       lbm_controler.setModel(BGK);
+
+   }
+}
 
 void ofApp::draw()
 {
-    float scalex = (float)ofGetWindowWidth()/lbm_controler.x_size;
-    float scaley = (float)ofGetWindowHeight()/lbm_controler.y_size;
-
-    float scale = scaley/scalex;
-
-    static float max = -1000;
-    static float mag_scale = 1.0;
-    for (int j = 0; j < lbm_controler.y_size; j++)
+    lbm_controler.draw(ofGetWindowWidth(), ofGetWindowHeight(), colormap);
+    for(auto& p : particles)
     {
-        for(int i = 0; i < lbm_controler.x_size; i++)
-        {
-            int pos = j * lbm_controler.x_size + i;
-
-           // lbm_controler.nodes[pos].compute_velocity(lbm_controler.c);
-            const ofVec2f& v = lbm_controler.nodes[pos].u;
-
-            float mag = v.length();
-
-            if (mag > max)
-            {
-                max = mag;
-                //std::cout << "mag: " << mag ;
-                mag_scale = float(NCOLORS) / max;
-                //std::cout << " scaled mag = " << mag_scale << std::endl;
-            }
-
-
-            ofVec2f p1 (i* scalex, j*scaley);
-            ofVec2f p2 (p1);
-            p2.x -= scalex * v.x / mag;
-            p2.y -= scaley * v.y / mag;
-
-            ofSetColor(colormap.use(mag*mag_scale));
-            ofDrawArrow(p1,p2, 2);
-        }
+        p.draw(colormap);
     }
-
     gui.draw();
-
 }
 
 void ofApp::exit()
@@ -94,6 +99,13 @@ void ofApp::mouseMoved(ofMouseEventArgs& mouse)
 
 void ofApp::mouseDragged(ofMouseEventArgs& mouse)
 {
+    if (mouse.button == 1)
+    {
+        particles.erase(particles.begin());
+        Particle p;
+        p.position.set(mouse.x,mouse.y);
+        particles.push_back(p);
+    }
 }
 
 void ofApp::mousePressed(ofMouseEventArgs& mouse)
@@ -102,6 +114,14 @@ void ofApp::mousePressed(ofMouseEventArgs& mouse)
 
 void ofApp::mouseReleased(ofMouseEventArgs& mouse)
 {
+    if (mouse.button == 0)
+    {
+        particles.erase(particles.begin());
+        Particle p;
+        p.position.set(mouse.x,mouse.y);
+        particles.push_back(p);
+
+    }
 }
 
 void ofApp::windowResized(ofResizeEventArgs& window)
