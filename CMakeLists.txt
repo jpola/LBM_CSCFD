@@ -37,6 +37,7 @@ set(SOURCES
     src/colormap/namedMaps.cpp
     src/ofApp.cpp
     src/particle.cpp
+    src/interpolation.cpp
 )
 
 add_executable(

@@ -1,6 +1,5 @@
 #include "particle.hpp"
 #include "interpolation.hpp"
-
 Particle::Particle()
 {
 

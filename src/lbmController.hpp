@@ -92,7 +92,7 @@ public:
             nodes[bottom].u.set(0.0);
         }
 
-        for (int i = 0; i < y_size; i++)
+        for (int i = 1; i < y_size; i++)
         {
             //int index = x + x_size * y;
             int left  = x_size * i;
@@ -205,27 +205,33 @@ public:
             {
                 int pos = j * x_size + i;
 
-               // lbm_controler.nodes[pos].compute_velocity(lbm_controler.c);
-                const ofVec2f& v = nodes[pos].u;
+               auto& node = nodes[pos];
+               ofVec2f p1 (i* scalex, j*scaley);
+               ofVec2f p2 (p1);
 
-                float mag = v.length();
+               if(node.node_type == Node::FLUID)
+               {
+                   const ofVec2f& v = node.u;
+                   float mag = v.length();
 
-                if (mag > max)
-                {
-                    max = mag;
-                    //std::cout << "mag: " << mag ;
-                    mag_scale = float(NCOLORS) / max;
-                    //std::cout << " scaled mag = " << mag_scale << std::endl;
-                }
+                   if (mag > max)
+                   {
+                       max = mag;
+                       mag_scale = float(NCOLORS) / max;
+                   }
 
+                   p2.x -= scalex * v.x / mag;
+                   p2.y -= scaley * v.y / mag;
 
-                ofVec2f p1 (i* scalex, j*scaley);
-                ofVec2f p2 (p1);
-                p2.x -= scalex * v.x / mag;
-                p2.y -= scaley * v.y / mag;
+                   ofSetColor(cmap.use(mag*mag_scale));
+                   ofDrawArrow(p1,p2, 2);
+               }
+               else
+               {
+                   ofSetColor(ofColor::black);
+                   ofDrawRectangle(p1, scalex, scaley);
 
-                ofSetColor(cmap.use(mag*mag_scale));
-                ofDrawArrow(p1,p2, 2);
+               }
             }
         }
 

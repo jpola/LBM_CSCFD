@@ -1,4 +1,5 @@
 #include "ofApp.hpp"
+#include "interpolation.hpp"
 
 void ofApp::setup()
 {
@@ -13,7 +14,7 @@ void ofApp::setup()
                              ofVec2f(0,0), ofVec2f(0.002,0.002)));
     gui.add(model.setup("MRT", true));
 
-    lbm_controler = Controler(64, 64,
+    lbm_controler = Controler(32, 32,
                               viscosity.get(), acceleration, MRT);
 
     //lbm_controler.setup_channel();
@@ -99,13 +100,25 @@ void ofApp::mouseMoved(ofMouseEventArgs& mouse)
 
 void ofApp::mouseDragged(ofMouseEventArgs& mouse)
 {
+    int x, y = 0;
+    calculateIndex(x, y, mouse, lbm_controler.x_size, lbm_controler.y_size);
+
+    int index = x + lbm_controler.x_size * y;
+
+    auto& node = lbm_controler.nodes[index];
+
     if (mouse.button == 1)
     {
-        particles.erase(particles.begin());
-        Particle p;
-        p.position.set(mouse.x,mouse.y);
-        particles.push_back(p);
+       node.node_type = Node::SOLID;
+       node.u.set(0);
     }
+
+    if (mouse.button == 2)
+    {
+       node.node_type = Node::FLUID;
+    }
+
+
 }
 
 void ofApp::mousePressed(ofMouseEventArgs& mouse)
