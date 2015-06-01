@@ -148,12 +148,23 @@ Wartości równowagowe momentów wyznaczamy z równań:
 gdzie $j_x = \rho u_x$, $j_y = \rho u_y$.
 
 \section{Warunki brzegowe}
-%W modelu użyto warunków brzegowych typu no_slip.
+W modelu użyto warunków brzegowych typu no-slip.
 
 \subsection{Warunki początkowe}
 System inicjalizowany jest wartościami równowagowymi dystrybucji. Przepływ płynu wymuszany jest przez akcelerację odpowiednich elementów płynu zgodnie z równaniem (47) podanym przez M.Sukopa \cite{sukop}
 
+\section{Wyniki}
+Zastosowanie modelu MRT do symulacji przepływu płynu metodą LBM pozwala na badanie zjawisk przy znacznie wyższych liczbach Reynoldsa niż przy zastosowaniu modelu LBM-BGK. Test pozwoliły na osiągnięcie wartości $Re>10000$. Na rysunku \ref{MRT1} przedstawiona jest symulacja układu powszechnie znana jako cavity dla $Re=6000$. 
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=0.75\linewidth]{images/6000.png}
+\caption{Cavity Re=6000.}
+\label{MRT1}
+\end{center}
+\end{figure}
 
+\section{Kod programu}
+Kod źródłowy zaimplementowaego modelu można pobrać z repozytoriun github: \url{https://github.com/jpola/LBM_CSCFD}. Projekt skonfigurowany jest za pomocą systemu CMAKE. Wymaga zainstalowania OpenFrameworks w wariancie CMake \url{https://github.com/ofnode/of} oraz rozszeżeń ofxGui i ofxColorMap.
 
 \newpage
 \bibliography{raport_bib}

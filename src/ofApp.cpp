@@ -1,6 +1,6 @@
 #include "ofApp.hpp"
 #include "interpolation.hpp"
-
+#include <fstream>
 void ofApp::setup()
 {
 
@@ -8,19 +8,26 @@ void ofApp::setup()
     viscosity.addListener(this, &ofApp::viscosityChanged);
     acceleration.addListener(this, &ofApp::accelerationChanged);
     model.addListener(this, &ofApp::modelChanged);
+    saveBtn.addListener(this, &ofApp::saveVTK);
+
     //reynolds.addListener(this, &ofApp::reynoldsChanged);
 
     gui.setup("LBM control panel");
-    //min BGK ~= 0.003
-    //min MRT  =0.00000001
-    //gui.add(viscosity.set("viscosity", 0.00925, 0.0001, 0.01));
-    gui.add(viscosity.set("viscosity", 0.00625, 0.0001, 0.01));
+
+    //gui.add(viscosity.set("viscosity", 0.00625, 0.0001, 0.01));
+    //gui.add(viscosity.set("viscosity", 0.0625, 0.0001, 0.01)); //RE 97 MRT
+    //gui.add(viscosity.set("viscosity", 0.00625, 0.0001, 0.01)); //RE 970 MRT
+    //gui.add(viscosity.set("viscosity", 0.00645, 0.0001, 0.01)); //RE 7747 BGK max
+    gui.add(viscosity.set("viscosity", 0.0041, 0.0001, 0.01)); //RE 7747 BGK
+
     gui.add(acceleration.set("acceleration", ofVec2f(0.01, 0),
                              ofVec2f(0,0), ofVec2f(0.01,0.01)));
-    gui.add(model.setup("MRT", true));
     reynolds.setup(std::string("Re: 0"));
     gui.add(&reynolds);
 
+    gui.add(saveBtn.setup("Save to VTK"));
+
+    gui.add(model.setup("MRT", true));
     Lx = Ly = 120;
     lbm_controler = Controler(Lx, Ly,
                               viscosity.get(), acceleration, MRT);
@@ -40,7 +47,8 @@ void ofApp::setup()
 
 void ofApp::update()
 {
-    for (int i = 0; i < 50; i++)
+
+    for (int i = 0; i < 1550; i++)
     {
         lbm_controler.propagate();
     }
@@ -53,6 +61,64 @@ void ofApp::update()
     reynoldsChanged();
 
 }
+
+void ofApp::saveVTK()
+{
+
+    std::ofstream ofs ("simple.vtk", std::ofstream::out);
+    int size = Lx * Ly;
+    ofs << "# vtk DataFile Version 2.0" << std::endl;
+    ofs << "LBM Cavity "  << Lx << " " << Ly << std::endl;
+    ofs << "ASCII\nDATASET STRUCTURED_POINTS" << std::endl;
+    ofs << "DIMENSIONS " << Lx << " " << Ly << " " << 1 << std::endl;
+    ofs << "ORIGIN 0 0 0" << std::endl << "SPACING 1 1 1" << std::endl;
+    ofs << "POINT_DATA " << size << std::endl;
+
+    ofs << "VECTORS Velocity float" << std::endl;
+    for (int j = Ly-1; j >= 0; j--)
+    {
+        for(int i = Lx-1; i >= 0; i--)
+        {
+            int pos = j * Lx + i;
+
+           auto& node = lbm_controler.nodes[pos];
+
+           if(node.node_type == Node::FLUID)
+           {
+               const ofVec2f& v = node.u;
+               ofs << v.x << "\t"<< v.y << "\t" << 0 << std::endl;
+           }
+           else
+           {
+               ofs << 0 << "\t"<< 0 << "\t" << 0 << std::endl;
+           }
+        }
+    }
+
+    ofs << "VECTORS U_normalized float" << std::endl;
+    float inv_unorm = 1.0 / lbm_controler.u_max;
+    for (int j = Ly-1; j >= 0; j--)
+    {
+        for(int i = Lx-1; i >= 0; i--)
+        {
+            int pos = j * Lx + i;
+
+           auto& node = lbm_controler.nodes[pos];
+
+           if(node.node_type == Node::FLUID)
+           {
+               const ofVec2f& v = node.u * inv_unorm;
+               ofs << v.x << "\t"<< v.y << "\t" << 0 << std::endl;
+           }
+           else
+           {
+               ofs << 0 << "\t"<< 0 << "\t" << 0 << std::endl;
+           }
+        }
+    }
+    ofs.close();
+}
+
 
 void ofApp::viscosityChanged(float &v)
 {

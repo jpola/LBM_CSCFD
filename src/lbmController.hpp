@@ -62,7 +62,7 @@ public:
         //In case of a Poiseuille flow, Luo et al. state the following
         //formula which relates s 4 and the simulated boundary position [9]:
         //po przekształceniach
-        S[4] = 1.2; //(4 - 2*S[8])/(3*delta*S[8] + 2 - S[8]);
+        S[4] = 1.5;//(4 - 2*S[8])/(3*delta*S[8] + 2 - S[8]);
         S[6] = S[4];
     }
 

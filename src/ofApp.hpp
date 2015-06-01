@@ -26,6 +26,7 @@ class ofApp : public ofBaseApp
     void windowResized (ofResizeEventArgs&);
     void gotMessage    (ofMessage);
     void dragEvent     (ofDragInfo);
+    void saveVTK ();
 
     Controler lbm_controler;
     int Lx, Ly;
@@ -40,6 +41,8 @@ class ofApp : public ofBaseApp
     ofxLabel reynolds;
 
     ofxToggle model;
+
+    ofxButton saveBtn;
 
     std::vector<Particle> particles;
 
