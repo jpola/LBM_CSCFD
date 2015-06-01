@@ -4,43 +4,53 @@
 void ofApp::setup()
 {
 
+    ofSetBackgroundColor(ofColor::wheat);
     viscosity.addListener(this, &ofApp::viscosityChanged);
     acceleration.addListener(this, &ofApp::accelerationChanged);
     model.addListener(this, &ofApp::modelChanged);
+    //reynolds.addListener(this, &ofApp::reynoldsChanged);
 
     gui.setup("LBM control panel");
-    gui.add(viscosity.set("viscosity", 0.004, 0.00001, 0.008));
-    gui.add(acceleration.set("acceleration", ofVec2f(0.0005, 0),
-                             ofVec2f(0,0), ofVec2f(0.002,0.002)));
+    //min BGK ~= 0.003
+    //min MRT  =0.00000001
+    //gui.add(viscosity.set("viscosity", 0.00925, 0.0001, 0.01));
+    gui.add(viscosity.set("viscosity", 0.00625, 0.0001, 0.01));
+    gui.add(acceleration.set("acceleration", ofVec2f(0.01, 0),
+                             ofVec2f(0,0), ofVec2f(0.01,0.01)));
     gui.add(model.setup("MRT", true));
+    reynolds.setup(std::string("Re: 0"));
+    gui.add(&reynolds);
 
-    lbm_controler = Controler(32, 32,
+    Lx = Ly = 120;
+    lbm_controler = Controler(Lx, Ly,
                               viscosity.get(), acceleration, MRT);
 
     //lbm_controler.setup_channel();
     lbm_controler.setup_cavity();
     //lbm_controler.setup_obstacle();
-    colormap.setMapFromName("jet");
+    colormap.setMapFromName("hsv");
 
-    for (int i = 0; i < 30; i++){
-        Particle p;
-        p.position.set(ofRandom(10,ofGetWindowWidth()-10),ofRandom(10, ofGetWindowHeight()-10));
-        p.velocity.set(0);
-        particles.push_back(p);
-    }
+//    for (int i = 0; i < 30; i++){
+//        Particle p;
+//        p.position.set(ofRandom(10,ofGetWindowWidth()-10),ofRandom(10, ofGetWindowHeight()-10));
+//        p.velocity.set(0);
+//        particles.push_back(p);
+//    }
 }
 
 void ofApp::update()
 {
-    for (int i = 0; i < 30; i++)
+    for (int i = 0; i < 50; i++)
     {
         lbm_controler.propagate();
     }
 
-    for(auto& p : particles)
-    {
-        p.update(lbm_controler);
-    }
+//    for(auto& p : particles)
+//    {
+//        p.update(lbm_controler);
+//    }
+
+    reynoldsChanged();
 
 }
 
@@ -70,15 +80,26 @@ void ofApp::modelChanged(bool& b)
        lbm_controler.setModel(BGK);
 
    }
+
+   lbm_controler.u_max = -1;
+}
+
+void ofApp::reynoldsChanged()
+{
+    float u_max = lbm_controler.get_umax();
+    float visc = lbm_controler.viscosity;
+    float Re = Lx * u_max / visc;
+
+    reynolds = "Re: " + std::to_string( int(Re));
 }
 
 void ofApp::draw()
 {
     lbm_controler.draw(ofGetWindowWidth(), ofGetWindowHeight(), colormap);
-    for(auto& p : particles)
-    {
-        p.draw(colormap);
-    }
+//    for(auto& p : particles)
+//    {
+//        p.draw(colormap);
+//    }
     gui.draw();
 }
 

@@ -18,7 +18,7 @@ public:
         x_size(0), y_size(0), size(0),
         w(9), c(9), nodes(0),
         viscosity(0), acceleration(0),
-        S(9), m_eq(9), m(9), model(BGK)
+        S(9), m_eq(9), m(9), model(BGK), u_max(-100)
     {
         init_base_vectors();
         init_weights();
@@ -32,7 +32,7 @@ public:
         x_size(x), y_size(y), size(x*y),
         w(9), c(9), nodes(size),
         viscosity(viscosity), acceleration(acceleration),
-        S(9), m_eq(9), m(9), model(model)
+        S(9), m_eq(9), m(9), model(model), u_max(-100)
     {
         init_base_vectors();
         init_weights();
@@ -62,7 +62,7 @@ public:
         //In case of a Poiseuille flow, Luo et al. state the following
         //formula which relates s 4 and the simulated boundary position [9]:
         //po przekształceniach
-        S[4] = (4 - 2*S[8])/(3*delta*S[8] + 2 - S[8]);
+        S[4] = 1.2; //(4 - 2*S[8])/(3*delta*S[8] + 2 - S[8]);
         S[6] = S[4];
     }
 
@@ -92,7 +92,7 @@ public:
             nodes[bottom].u.set(0.0);
         }
 
-        for (int i = 1; i < y_size; i++)
+        for (int i = 0; i < y_size; i++)
         {
             //int index = x + x_size * y;
             int left  = x_size * i;
@@ -197,7 +197,7 @@ public:
 
         float scale = scaley/scalex;
 
-        static float max = -1000;
+
         static float mag_scale = 1.0;
         for (int j = 0; j < y_size; j++)
         {
@@ -214,27 +214,33 @@ public:
                    const ofVec2f& v = node.u;
                    float mag = v.length();
 
-                   if (mag > max)
+                   if (mag > u_max)
                    {
-                       max = mag;
-                       mag_scale = float(NCOLORS) / max;
+                       u_max = mag;
+                       //std::cout << "max: " << u_max << std::endl;
+                       mag_scale = float(NCOLORS) / u_max;
                    }
 
                    p2.x -= scalex * v.x / mag;
                    p2.y -= scaley * v.y / mag;
 
-                   ofSetColor(cmap.use(mag*mag_scale));
+                   ofSetColor(cmap.use(NCOLORS - (mag * mag_scale)));
                    ofDrawArrow(p1,p2, 2);
                }
                else
                {
-                   ofSetColor(ofColor::black);
+                   ofSetColor(ofColor::grey);
                    ofDrawRectangle(p1, scalex, scaley);
 
                }
             }
         }
 
+    }
+
+    float get_umax()
+    {
+        return u_max;
     }
 
     int x_size;
@@ -255,6 +261,8 @@ public:
 
     LBM_MODEL model;
 
+    float u_max;
+
 
 private:
 
@@ -272,6 +280,18 @@ private:
 
 
     float M_INV [9][9]= {
+        {  0.11111,  -0.11111,   0.11111,   0.00000,  -0.00000,   0.00000,  -0.00000,   0.00000,   0.00000},
+        {  0.11111,  -0.02778,  -0.05556,   0.16667,  -0.16667,   0.00000,   0.00000,   0.25000,   0.00000},
+        {  0.11111,  -0.02778,  -0.05556,   0.00000,   0.00000,   0.16667,  -0.16667,  -0.25000,   0.00000},
+        {  0.11111,  -0.02778,  -0.05556,  -0.16667,   0.16667,   0.00000,   0.00000,   0.25000,   0.00000},
+        {  0.11111,  -0.02778,  -0.05556,   0.00000,   0.00000,  -0.16667,   0.16667,  -0.25000,   0.00000},
+        {  0.11111,   0.05556,   0.02778,   0.16667,   0.08333,   0.16667,   0.08333,   0.00000,   0.25000},
+        {  0.11111,   0.05556,   0.02778,  -0.16667,  -0.08333,   0.16667,   0.08333,   0.00000,  -0.25000},
+        {  0.11111,   0.05556,   0.02778,  -0.16667,  -0.08333,  -0.16667,  -0.08333,   0.00000,   0.25000},
+        {  0.11111,   0.05556,   0.02778,   0.16667,   0.08333,  -0.16667,  -0.08333,   0.00000,  -0.25000}
+    };
+
+            /*{
                 {0.1111111111111111,-0.11111111111111112,  0.1111111111111111,0,0,0,0,0,0},
                 {0.1111111111111111,-0.02777777777777779, -0.055555555555555566,0.16666666666666666,-0.16666666666666669,0,0,0.25,0},
                 {0.1111111111111111,-0.027777777777777762,-0.055555555555555539,0,-1.3877787807814457e-017,0.16666666666666666,-0.16666666666666669,-0.25,0},
@@ -281,7 +301,7 @@ private:
                 {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,0.16666666666666666,0.083333333333333329,0,-0.25},
                 {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,-0.16666666666666666,-0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,0.25},
                 {0.1111111111111111, 0.055555555555555552, 0.027777777777777776,0.16666666666666666,0.083333333333333329,-0.16666666666666666,-0.083333333333333329,0,-0.25}
-                };
+                };*/
 
     //MRT relaxation parameters
     // s0, s3, s5 = 0 - rho, jx, jy muszą być zachowane.
@@ -357,7 +377,7 @@ private:
         m_eq[7] = jx * jx - jy * jy;
         m_eq[8] = jx*jy;
 
-        //do collision
+        //do collision with S as relaxation factors
         for (int i = 0; i < 9; i++)
         {
             m[i] = S[i] * (m[i] - m_eq[i]);

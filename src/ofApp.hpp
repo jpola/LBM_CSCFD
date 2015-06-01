@@ -28,6 +28,7 @@ class ofApp : public ofBaseApp
     void dragEvent     (ofDragInfo);
 
     Controler lbm_controler;
+    int Lx, Ly;
 
     ofxColorMap colormap;
 
@@ -35,6 +36,8 @@ class ofApp : public ofBaseApp
     ofxPanel gui;
     ofParameter<float> viscosity;
     ofParameter<ofVec2f> acceleration;
+    //ofParameter<float> reynolds;
+    ofxLabel reynolds;
 
     ofxToggle model;
 
@@ -44,6 +47,7 @@ class ofApp : public ofBaseApp
     void viscosityChanged(float& v);
     void accelerationChanged(ofVec2f &a);
     void modelChanged(bool &b);
+    void reynoldsChanged();
 
 };
 
