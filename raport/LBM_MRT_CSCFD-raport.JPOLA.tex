@@ -64,12 +64,12 @@ $\Delta n$, jest prawdopodobną liczbą cząstek w położeniu $x$ o pędzie $p$
 Wielkość po prawej stronie równania \ref{Boltzmann_eq} modeluje oddziaływania międzycząsteczkowe i jest zwana całką lub operatorem kolizji.
 
 \section{Operator kolizji}
-Operator kolizji w równaniu Boltzmanna jest wyrażeniem całkowym. Dla układu dwóch cząstek traktowanych, jako sferyczne ciała sztywne oraz przy założeniu tylko bliskich oddziaływań operator zderzenia może być zapisany w następujący sposób:
+Operator kolizji w równaniu Boltzmanna jest wyrażeniem całkowym. Dla układu dwóch cząstek traktowanych, jako sferyczne ciała sztywne oraz przy założeniu tylko bliskich oddziaływań operator zderzenia może być zapisany w następujący sposób\cite{huang} :
 \begin{equation}
-\Omega(f) = \int (f'_{12} - f_{12})(p_1 - p_2) \sigma(p_1 - p_2, \omega ) d\omega dp
+\Omega(f) = \int (f'_{12} - f_{12})(p_1 - p_2) \sigma(p_1 - p_2, \omega ) d\omega dp_2
 \label{collision_eq}
 \end{equation}
-, gdzie $\omega$ jest kątem bryłowym, w który cząstka została rozproszona, $f_{12}$ jest dwucząstkową funkcją rozkładu przed zderzeniem, $f'_{12}$ dwucząstkową funkcją rozkładu po zderzeniu.
+gdzie $\omega$ jest kątem bryłowym, w który cząstka została rozproszona, $f_{12}$ jest dwucząstkową funkcją rozkładu przed zderzeniem, $f'_{12}$ dwucząstkową funkcją rozkładu po zderzeniu.
 \subsection{Aproksymacja BGK}
 Aproksymacja BGK zakłada, że układ dąży do osiągnięcia równowagi termodynamicznej $f \rightarrow f^{eq}$, określoną np. przez rozkład Maxwella. Każde zderzenie powoduje odchylenie od stanu równowagi po czym układ wraca do niego w czasie $\tau$. Całka kolizji w przybliżeniu BGK wyrażona jest następującym równaniem:
 \begin{equation}
@@ -104,7 +104,7 @@ M =
 \end{bmatrix}
 \end{equation}
             
-Wartości współczynników macierzy wynikają z postaci równań wyrażających poszczególne momenty funkcji rozkładu. P. Lallemand \cite{MRT} proponuje użycie następujących momentów $\ket{\rho} $ gęstość,  $\ket{\epsilon}$ energia, $\ket{\varepsilon}$ funkcja kwadratu energii, $\ket{j_x}$, $\ket{j_y}$ pęd odpowiednio w kierunku $x$ oraz $y$. $\ket{q_x}$, $\ket{q_y}$ strumień energii w kierunku $x$ i $y$, $\ket{p_{xx}}$, $\ket{p_{xy}}$ diagonalna i pozadiagonalna składowa tęsora naprężeń.
+Wartości współczynników macierzy wynikają z postaci równań wyrażających poszczególne momenty funkcji rozkładu. P. Lallemand \cite{MRT} proponuje użycie następujących momentów $\ket{\rho} $ gęstość,  $\ket{\epsilon}$ energia, $\ket{\varepsilon}$ funkcja kwadratu energii, $\ket{j_x}$, $\ket{j_y}$ pęd odpowiednio w kierunku $x$ oraz $y$. $\ket{q_x}$, $\ket{q_y}$ strumień energii w kierunku $x$ i $y$, $\ket{p_{xx}}$, $\ket{p_{xy}}$ diagonalna i pozadiagonalna składowa tensora naprężeń.
 \begin{eqnarray}
 &\ket{\rho} = (1, 1, 1, 1, 1, 1, 1, 1, 1)^T		\\
 &\ket{\epsilon} = (-4, -1 , -1 , -1 , -1 , 2 , 2 , 2 , 2)^T\\
